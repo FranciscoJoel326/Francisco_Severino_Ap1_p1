@@ -1,0 +1,72 @@
+@page "/Autores/Create"
+@inject AutoresServices autoresServices
+@inject NavigationManager navigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Crear Autor</PageTitle>
+
+<EditForm Model="Autor" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+
+    <div class="container">
+        <div class="card shadow-lg">
+            <div class="card-header">
+                <h5 class="card-title">Registro de Autores</h5>
+            </div>
+
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label"><strong>Nombres</strong></label>
+                    <InputText class="form-control" @bind-Value="Autor.Nombres" />
+                    <ValidationMessage For="@(() => Autor.Nombres)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Nacionalidad</strong></label>
+                    <InputText class="form-control" @bind-Value="Autor.Nacionalidad" />
+                    <ValidationMessage For="@(() => Autor.Nacionalidad)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Fecha de Nacimiento</strong></label>
+                    <InputDate class="form-control" @bind-Value="Autor.FechaNacimiento" />
+                    <ValidationMessage For="@(() => Autor.FechaNacimiento)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Sueldo</strong></label>
+                    <InputNumber class="form-control" @bind-Value="Autor.Sueldo" />
+                    <ValidationMessage For="@(() => Autor.Sueldo)" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(Mensaje))
+                {
+                    <div class="alert alert-danger">@Mensaje</div>
+                }
+            </div>
+
+            <div class="card-footer text-center">
+                <a href="/Autores" class="btn btn-outline-primary"><span class="bi bi-arrow-left me-1"></span>Volver</a>
+                <button type="submit" class="btn btn-outline-success"><span class="bi bi-check-circle me-1"></span>Guardar</button>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    public Autores Autor { get; set; } = new Autores();
+    public string Mensaje { get; set; } = string.Empty;
+
+    private async Task Guardar()
+    {
+        var guardado = await autoresServices.Guardar(Autor);
+        if (guardado)
+        {
+            navigationManager.NavigateTo("/Autores");
+        }
+        else
+        {
+            Mensaje = "No se pudo guardar el autor";
+        }
+    }
+}

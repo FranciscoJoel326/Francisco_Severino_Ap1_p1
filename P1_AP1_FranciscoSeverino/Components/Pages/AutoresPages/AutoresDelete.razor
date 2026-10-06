@@ -1,0 +1,75 @@
+@page "/Autores/Delete/{IdAutor:int}"
+@inject AutoresServices autoresServices
+@inject NavigationManager navigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Eliminar Autor</PageTitle>
+
+<div class="container">
+    <div class="card shadow-lg">
+        <div class="card-header">
+            <h5 class="card-title text-danger">Eliminar Autor</h5>
+        </div>
+
+        <div class="card-body">
+            <h5>&iquest;Est&aacute; seguro que desea eliminar este autor?</h5>
+            <hr />
+            <dl class="row">
+                <dt class="col-sm-3">IdAutor</dt>
+                <dd class="col-sm-9">@Autor.IdAutor</dd>
+                <dt class="col-sm-3">Nombres</dt>
+                <dd class="col-sm-9">@Autor.Nombres</dd>
+                <dt class="col-sm-3">Nacionalidad</dt>
+                <dd class="col-sm-9">@Autor.Nacionalidad</dd>
+                <dt class="col-sm-3">Fecha de Nacimiento</dt>
+                <dd class="col-sm-9">@Autor.FechaNacimiento.ToString("dd/MM/yyyy")</dd>
+                <dt class="col-sm-3">Sueldo</dt>
+                <dd class="col-sm-9">@Autor.Sueldo.ToString("N2")</dd>
+            </dl>
+
+            @if (!string.IsNullOrEmpty(Mensaje))
+            {
+                <div class="alert alert-danger">@Mensaje</div>
+            }
+        </div>
+
+        <div class="card-footer text-center">
+            <a href="/Autores" class="btn btn-outline-primary"><span class="bi bi-arrow-left me-1"></span>Volver</a>
+            <button type="button" class="btn btn-outline-danger" @onclick="Eliminar"><span class="bi bi-trash me-1"></span>Eliminar</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int IdAutor { get; set; }
+
+    public Autores Autor { get; set; } = new Autores();
+    public string Mensaje { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var autor = await autoresServices.Buscar(IdAutor);
+        if (autor == null)
+        {
+            navigationManager.NavigateTo("/Autores");
+        }
+        else
+        {
+            Autor = autor;
+        }
+    }
+
+    private async Task Eliminar()
+    {
+        var eliminado = await autoresServices.Eliminar(IdAutor);
+        if (eliminado)
+        {
+            navigationManager.NavigateTo("/Autores");
+        }
+        else
+        {
+            Mensaje = "No se pudo eliminar el autor";
+        }
+    }
+}

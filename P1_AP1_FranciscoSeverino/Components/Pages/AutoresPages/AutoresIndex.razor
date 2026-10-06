@@ -1,0 +1,161 @@
+@page "/Autores"
+@inject AutoresServices autoresServices
+@rendermode InteractiveServer
+
+<PageTitle>Autores</PageTitle>
+
+<div class="container">
+    <div class="card shadow-lg">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Consulta de Autores</h5>
+            <a href="/Autores/Create" class="btn btn-primary"><span class="bi bi-plus-square me-1"></span>Crear</a>
+        </div>
+
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-2">
+                    <label class="form-label"><strong>IdAutor</strong></label>
+                    <input type="number" class="form-control" @bind="IdAutor" />
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label"><strong>Nombres</strong></label>
+                    <input class="form-control" @bind="Nombres" />
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label"><strong>Nacionalidad</strong></label>
+                    <input class="form-control" @bind="Nacionalidad" />
+                </div>
+            </div>
+
+            <div class="row mb-3 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label"><strong>Nacimiento desde</strong></label>
+                    <input type="date" class="form-control" @bind="FechaDesde" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label"><strong>Nacimiento hasta</strong></label>
+                    <input type="date" class="form-control" @bind="FechaHasta" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label"><strong>Sueldo m&iacute;nimo</strong></label>
+                    <input type="number" class="form-control" @bind="SueldoMinimo" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label"><strong>Sueldo m&aacute;ximo</strong></label>
+                    <input type="number" class="form-control" @bind="SueldoMaximo" />
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-outline-primary" @onclick="Buscar"><span class="bi bi-search me-1"></span>Buscar</button>
+                    <button type="button" class="btn btn-outline-secondary" @onclick="Restablecer"><span class="bi bi-arrow-counterclockwise me-1"></span>Restablecer</button>
+                </div>
+            </div>
+
+            <table class="table table-hover">
+                <thead class="table table-striped text-black">
+                    <tr>
+                        <th>IdAutor</th>
+                        <th>Nombres</th>
+                        <th>Nacionalidad</th>
+                        <th>Fecha de Nacimiento</th>
+                        <th class="text-end">Sueldo</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var autor in ListaAutores)
+                    {
+                        <tr>
+                            <td>@autor.IdAutor</td>
+                            <td>@autor.Nombres</td>
+                            <td>@autor.Nacionalidad</td>
+                            <td>@autor.FechaNacimiento.ToString("dd/MM/yyyy")</td>
+                            <td class="text-end">@autor.Sueldo.ToString("N2")</td>
+                            <td class="text-center">
+                                <a href="/Autores/Edit/@autor.IdAutor" class="btn btn-outline-primary bi bi-pencil-square"></a>
+                                <a href="/Autores/Delete/@autor.IdAutor" class="btn btn-outline-danger bi bi-trash"></a>
+                            </td>
+                        </tr>
+                    }
+                    @if (ListaAutores.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center">No hay autores para mostrar</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card-footer d-flex justify-content-between">
+            <label><strong>Cantidad de autores:</strong> @Cantidad</label>
+            <label><strong>Total de sueldos:</strong> @TotalSueldos.ToString("N2")</label>
+        </div>
+    </div>
+</div>
+
+@code {
+    public List<Autores> ListaAutores { get; set; } = new List<Autores>();
+    public int? IdAutor { get; set; }
+    public string Nombres { get; set; } = string.Empty;
+    public string Nacionalidad { get; set; } = string.Empty;
+    public DateTime? FechaDesde { get; set; }
+    public DateTime? FechaHasta { get; set; }
+    public decimal? SueldoMinimo { get; set; }
+    public decimal? SueldoMaximo { get; set; }
+    public int Cantidad { get; set; }
+    public decimal TotalSueldos { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Buscar();
+    }
+
+    private async Task Buscar()
+    {
+        var idAutor = IdAutor;
+        var nombres = (Nombres ?? string.Empty).Trim().ToLower();
+        var nacionalidad = (Nacionalidad ?? string.Empty).Trim().ToLower();
+        var fechaDesde = FechaDesde;
+        var fechaHasta = FechaHasta;
+
+        var lista = await autoresServices.Listar(a =>
+            (idAutor == null || a.IdAutor == idAutor) &&
+            (nombres == "" || a.Nombres.ToLower().Contains(nombres)) &&
+            (nacionalidad == "" || a.Nacionalidad.ToLower().Contains(nacionalidad)) &&
+            (fechaDesde == null || a.FechaNacimiento >= fechaDesde) &&
+            (fechaHasta == null || a.FechaNacimiento <= fechaHasta));
+
+        ListaAutores = new List<Autores>();
+        foreach (var autor in lista)
+        {
+            if (SueldoMinimo != null && autor.Sueldo < SueldoMinimo)
+            {
+                continue;
+            }
+            if (SueldoMaximo != null && autor.Sueldo > SueldoMaximo)
+            {
+                continue;
+            }
+            ListaAutores.Add(autor);
+        }
+
+        Cantidad = ListaAutores.Count;
+        TotalSueldos = 0;
+        foreach (var autor in ListaAutores)
+        {
+            TotalSueldos += autor.Sueldo;
+        }
+    }
+
+    private async Task Restablecer()
+    {
+        IdAutor = null;
+        Nombres = string.Empty;
+        Nacionalidad = string.Empty;
+        FechaDesde = null;
+        FechaHasta = null;
+        SueldoMinimo = null;
+        SueldoMaximo = null;
+        await Buscar();
+    }
+}
